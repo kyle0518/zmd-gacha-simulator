@@ -3,49 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZMD抽卡模擬器</title>
+    <meta name="description" content="明日方舟：終末地抽卡模擬器 — 特許尋訪保底、信物與花費統計">
+    <title>ZMD 抽卡模擬器</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
 </head>
 <body>
 
 <div class="main-container">
-    <div class="cost-badge" id="costBadge">目前花費：0</div>
-    <button class="reset-btn" onclick="resetTracking()">重置花費與紀錄</button>
+    <header class="topbar">
+        <div class="brand">ZMD<span>尋訪模擬</span></div>
+        <div class="cost-badge" id="costBadge" role="status">目前花費：0</div>
+        <button class="reset-btn" id="resetBtn" type="button">重置花費與紀錄</button>
+    </header>
 
-    <div class="sidebar" id="sidebar"></div>
+    <nav class="sidebar" id="sidebar" aria-label="卡池選擇"></nav>
 
-    <div class="content-area">
+    <main class="content-area">
         <div class="character-visual" id="characterVisual">
             <img id="characterImage" class="character-image" alt="抽到的幹員立繪" hidden>
             <div class="character-strip" id="characterStrip" hidden></div>
             <div class="character-placeholder" id="characterPlaceholder">CHARACTER VISUAL</div>
             <div class="character-caption" id="characterCaption"></div>
         </div>
-    </div>
+    </main>
 
-    <div class="info-panel" id="infoPanel">
-        <div class="info-title" id="infoTitle"></div>
+    <aside class="info-panel" id="infoPanel" aria-label="卡池資訊">
+        <h1 class="info-title" id="infoTitle"></h1>
         <div class="info-subtitle" id="infoSubtitle"></div>
         <div class="dummy-text" id="infoText"></div>
         <div class="pity-indicator" id="pityIndicator"></div>
-    </div>
+    </aside>
 
-    <div class="history-box" id="history">
+    <section class="history-box" id="history" aria-label="抽取紀錄">
         <div class="sixstar-stats" id="sixStarStats"></div>
         <div class="history-list" id="historyList">
-            <div style="color: #666;">近期抽取紀錄...</div>
+            <div class="history-empty">近期抽取紀錄...</div>
         </div>
-    </div>
+    </section>
 
     <div class="draw-controls">
         <div class="draw-btn-row">
-            <button class="draw-btn" onclick="gacha(1)">
+            <button class="draw-btn" type="button" data-draw="1">
                 <span>尋訪一次</span>
-                <span class="btn-sub">x500</span>
+                <span class="btn-sub">嵌晶玉 ×500</span>
             </button>
-            <button class="draw-btn ten-draw" onclick="gacha(10)">
+            <button class="draw-btn ten-draw" type="button" data-draw="10">
                 <span>尋訪十次</span>
-                <span class="btn-sub">x5000</span>
+                <span class="btn-sub">嵌晶玉 ×5000</span>
             </button>
         </div>
         <label class="skip-toggle" for="skipLeverToggle">
@@ -53,20 +58,56 @@
             <span>跳過動畫</span>
         </label>
     </div>
+
+    <p class="sr-only" id="liveRegion" aria-live="polite"></p>
 </div>
 
-<div id="pull-overlay">
-    <div class="pull-panel">
-        <div class="system-text">CAUTION<br>ONE TIME ONLY</div>
-        <div class="lever-container">
-            <div class="lever-track"></div>
-            <div id="lever" class="lever-handle"></div>
+<div id="pull-overlay" role="dialog" aria-modal="true" aria-label="尋訪閘刀">
+    <div class="switch-scene">
+        <div class="switch-head">
+            <span>CAUTION</span><span class="switch-head-sub">ONE TIME ONLY</span>
+            <span class="switch-lamps" aria-hidden="true"><i></i><i></i><i></i></span>
         </div>
-        <div class="pull-hint">向下拖動以開啟尋訪</div>
+        <div class="switch-panel">
+            <div class="switch-plate" aria-hidden="true"></div>
+            <div class="switch-vents" aria-hidden="true"></div>
+            <div class="switch-labels" aria-hidden="true">
+                <span class="switch-label-main">HEADHUNTING SYSTEM</span>
+                <span>HH-SW01 // TALOS-II LINK</span>
+                <span>CAUTION: HIGH VOLTAGE</span>
+            </div>
+            <div class="switch-arc" aria-hidden="true"></div>
+            <div id="lever" class="switch-arm" role="button" tabindex="0"
+                 aria-label="向下拉動閘刀，或按 Enter 開啟尋訪">
+                <div class="arm-bar"></div>
+                <div class="arm-grip"></div>
+            </div>
+            <div class="switch-pivot" aria-hidden="true"></div>
+            <div class="switch-scale" aria-hidden="true"><span>OFF</span><span>ON</span></div>
+        </div>
+        <div class="pull-hint">向下拉動閘刀以開啟尋訪（或按 Enter）</div>
     </div>
 </div>
 
-<script src="app.js"></script>
+<div id="pod-overlay" hidden role="dialog" aria-label="軌道投放">
+    <div class="pod-planet" aria-hidden="true"></div>
+    <div class="pod-capsule" aria-hidden="true"><span class="pod-window"></span></div>
+    <div class="pod-smoke" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="pod-caption">軌道投放中 — TALOS-II ORBITAL DROP</div>
+    <div class="pod-skip">點擊任意處跳過</div>
+</div>
+
+<div id="reveal-overlay" hidden role="dialog" aria-modal="true" aria-label="尋訪結果">
+    <div class="reveal-head">
+        <span class="reveal-title">尋訪結果</span>
+        <span class="reveal-pool" id="revealPool"></span>
+    </div>
+    <div class="reveal-stage" id="revealStage"></div>
+    <div class="reveal-actions">
+        <button class="reveal-btn ghost" id="revealSkip" type="button">全部揭示</button>
+        <button class="reveal-btn primary" id="revealClose" type="button" hidden>確認</button>
+    </div>
+</div>
 
 </body>
 </html>
